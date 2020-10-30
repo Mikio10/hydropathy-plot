@@ -4,6 +4,7 @@ Hydropathy plot drawer.
 Requires matplotlib. 
 
 usage: python3 hydropathy.py [-h] [-input INPUT] [-interval INTERVAL] [-output OUTPUT]
+
 optional arguments:
   -h, --help          show this help message and exit
   -input INPUT        Input file (fasta format)
