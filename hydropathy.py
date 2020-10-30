@@ -6,9 +6,14 @@ import argparse
 import re
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-input", type = open, help = "input file (fasta format)")
-parser.add_argument("-interval", type = int, help = "interval for calculating moving average (default: 20)")
+parser.add_argument("-input", type = open, help = "Input file (fasta format)")
+parser.add_argument("-interval", type = int, default = 20, help = "Interval for calculating moving average (default: 20)")
+parser.add_argument("-output", type = str, help = "Name for output file (File is not created if not specified)")
 args = parser.parse_args()
+
+interval = args.interval
+input = args.input.read()
+output = args.output
 
 hydropathyIndex = {"F":2.8,
 "A":1.8,
@@ -31,12 +36,6 @@ hydropathyIndex = {"F":2.8,
 "D":-3.5,
 "E":-3.5}
 
-if args.interval != None:
-    interval = args.interval
-else:
-    interval = 20
-
-input = args.input.read()
 seqName = re.findall(">.*\n", input)[0][1:-1]
 # remove sequence name, convert to CAPITAL, and remove characters other than amino acid
 sequence = re.sub("[^FAMILPVWGSYNQTCKRHDE]", "", input.replace(seqName, "").upper())
@@ -59,5 +58,7 @@ plt.plot(midResidue, hydropathy)
 plt.xlabel("Residue")
 plt.ylabel("Hydropathy")
 
-plt.savefig("hydropathy_" + seqName + ".png")
+if output != None:
+    plt.savefig(output)
+
 plt.show()
