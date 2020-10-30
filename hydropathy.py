@@ -103,8 +103,20 @@ def getCharge(pH):
 pI = 7
 if getCharge(pI) < 0:
     while getCharge(pI) < 0:
+        pI -= 1
+    pI += 1
+    while getCharge(pI) < 0:
+        pI -= 0.1
+    pI += 0.1
+    while getCharge(pI) < 0:
         pI -= 0.01
 else:
+    while getCharge(pI) > 0:
+        pI += 1
+    pI -= 1
+    while getCharge(pI) > 0:
+        pI += 0.1
+    pI += 0.1
     while getCharge(pI) > 0:
         pI += 0.01
 
