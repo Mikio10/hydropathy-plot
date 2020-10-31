@@ -4,7 +4,6 @@
 import matplotlib.pyplot as plt
 import argparse
 import re
-import math
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-input", type = open, help = "Input file (fasta format)")
@@ -37,26 +36,26 @@ hydropathyIndex = {"F":2.8,
 "D":-3.5,
 "E":-3.5}
 
-residualMw = {"F":147.1,
-"A":71.0,
-"M":131.0,
-"I":113.1,
-"L":113.1,
-"P":97.1,
-"V":99.1,
-"W":186.1,
-"G":57.0,
-"S":87.0,
-"Y":163.1,
-"N":114.0,
-"Q":128.1,
-"T":101.0,
-"C":103.0,
-"K":128.1,
-"R":156.1,
-"H":137.1,
-"D":115.0,
-"E":129.0}
+residualMw = {"F":147.174,
+"A":71.078,
+"M":131.196,
+"I":113.158,
+"L":113.158,
+"P":97.115,
+"V":99.131,
+"W":186.210,
+"G":57.051,
+"S":87.077,
+"Y":163.173,
+"N":114.103,
+"Q":128.129,
+"T":101.104,
+"C":103.143,
+"K":128.172,
+"R":156.186,
+"H":137.139,
+"D":115.087,
+"E":129.114}
 
 pKa = {"K":10.5,
 "R":12.5,
@@ -70,23 +69,27 @@ seqName = re.findall(">.*\n", input)[0][1:-1]
 # remove sequence name, convert to CAPITAL, and remove characters other than amino acid
 sequence = re.sub("[^FAMILPVWGSYNQTCKRHDE]", "", input.replace(seqName, "").upper())
 
-aaComposition = {}
-for char in "FAMILPVWGSYNQTCKRHDE":
-    aaComposition[char] = sequence.count(char)
-
-hydropathy = []
-movingAverage = 0
+hydropathyArray = []
+hydropathy = 0
 
 # calcultate initial value of moving average
 for i in range(interval):
-    movingAverage += hydropathyIndex[sequence[i]]/interval
-hydropathy.append(movingAverage)
+    hydropathy += hydropathyIndex[sequence[i]]/interval
+hydropathyArray.append(hydropathy)
 
 for i in range(1, len(sequence) - interval + 1):
-    movingAverage = movingAverage - hydropathyIndex[sequence[i]]/interval + hydropathyIndex[sequence[i + interval - 1]]/interval
-    hydropathy.append(movingAverage)
+    hydropathy = hydropathy - hydropathyIndex[sequence[i]]/interval + hydropathyIndex[sequence[i + interval - 1]]/interval
+    hydropathyArray.append(hydropathy)
 
-midResidue = range(int(interval/2), len(sequence) - interval + int(interval/2) + 1)
+residueArray = range(int(interval/2), len(sequence) - interval + int(interval/2) + 1)
+
+def getAminoAcidComposition(sequence):
+    aaComposition = {}
+    for char in "FAMILPVWGSYNQTCKRHDE":
+        aaComposition[char] = sequence.count(char)
+    return aaComposition
+
+aaComposition = getAminoAcidComposition(sequence)
 
 def getCharge(pH):
     # N,C terminal
@@ -100,43 +103,47 @@ def getCharge(pH):
     return charge
 
 # calculate pI
-pI = 7
-if getCharge(pI) < 0:
-    while getCharge(pI) < 0:
-        pI -= 1
-    pI += 1
-    while getCharge(pI) < 0:
-        pI -= 0.1
-    pI += 0.1
-    while getCharge(pI) < 0:
-        pI -= 0.01
-else:
-    while getCharge(pI) > 0:
+def getPI():
+    pI = 7
+    if getCharge(pI) < 0:
+        while getCharge(pI) < 0:
+            pI -= 1
         pI += 1
-    pI -= 1
-    while getCharge(pI) > 0:
+        while getCharge(pI) < 0:
+            pI -= 0.1
         pI += 0.1
-    pI += 0.1
-    while getCharge(pI) > 0:
-        pI += 0.01
+        while getCharge(pI) < 0:
+            pI -= 0.01
+    else:
+        while getCharge(pI) > 0:
+            pI += 1
+        pI -= 1
+        while getCharge(pI) > 0:
+            pI += 0.1
+        pI += 0.1
+        while getCharge(pI) > 0:
+            pI += 0.01
+    return pI
 
-molecularWeight = 18
-for char in "FAMILPVWGSYNQTCKRHDE":
-    molecularWeight += residualMw[char]*aaComposition[char]
+def getMw():
+    mw = 18
+    for char in "FAMILPVWGSYNQTCKRHDE":
+        mw += residualMw[char]*aaComposition[char]
+    return mw
 
-avgHydropathy = 0
+averageHydropathy = 0
 for char in "FAMILPVWGSYNQTCKRHDE":
-    avgHydropathy += hydropathyIndex[char]*aaComposition[char]/len(sequence)
+    averageHydropathy += hydropathyIndex[char]*aaComposition[char]/len(sequence)
 
 print("Length:",len(sequence))
-print("Molecular weight:", round(molecularWeight,1))
-print("pI:",round(pI,2))
-print("Average of hydropathy:", round(avgHydropathy,2))
+print("Molecular weight:", round(getMw(),1))
+print("pI:",round(getPI(),2))
+print("Average of hydropathy:", round(averageHydropathy,2))
 print("Amino acid composition")
 for char in "FAMILPVWGSYNQTCKRHDE":
     print(char + ":", aaComposition[char])
 
-plt.plot(midResidue, hydropathy)
+plt.plot(residueArray, hydropathyArray)
 plt.xlabel("Residue")
 plt.ylabel("Hydropathy")
 
